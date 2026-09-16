@@ -1,4 +1,4 @@
-# Environmental Violation Detection System
+# Litter Guard (Environmental Violation Detection System)
 
 An AI-powered end-to-end platform designed to detect environmental violations (such as vehicle littering) from CCTV footage, extract license plate numbers using ANPR, and log incidents into a centralized management dashboard.
 
