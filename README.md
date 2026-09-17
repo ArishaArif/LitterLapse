@@ -28,9 +28,14 @@ An AI-powered end-to-end platform designed to detect environmental violations (s
 │   │   ├── database.py      # Database engine & session setup
 │   │   ├── models.py        # SQLAlchemy database schema
 │   │   ├── schemas.py       # Pydantic data validation schemas
+│   │   ├── auth.py          # Password hashing, JWT creation/verification
 │   │   └── routers/
 │   │       ├── incidents.py # Incident CRUD API endpoints
-│   │       └── analytics.py # Analytics API endpoints
+│   │       ├── analytics.py # Analytics API endpoints
+│   │       └── auth.py      # POST /auth/login
+│   ├── alembic/              # Database migrations
+│   ├── alembic.ini
+│   ├── seed_admin.py         # One-off script to create Admin/Reviewer accounts
 │   ├── .env                 # Local environment variables (ignored by Git)
 │   └── requirements.txt     # Python dependencies
 ├── frontend/                 # React Dashboard (Vite)
@@ -103,17 +108,38 @@ An AI-powered end-to-end platform designed to detect environmental violations (s
    pip install -r requirements.txt
    ```
 
-4. **Configure Environment Variables:** Create a `.env` file inside the `backend/` directory with your local PostgreSQL connection parameters:
+4. **Configure Environment Variables:** Create a `.env` file inside the `backend/` directory with your local PostgreSQL connection parameters and a JWT secret:
    ```env
    DATABASE_URL=postgresql://violation_user:yourpass@localhost:5432/violation_db
+   JWT_SECRET_KEY=your-generated-secret-key
+   ```
+   Generate `JWT_SECRET_KEY` with:
+   ```bash
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+   Optional variables (safe to omit for local dev — sensible defaults apply):
+   ```env
+   JWT_EXPIRE_MINUTES=480          # defaults to 8-hour sessions
+   CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com   # defaults to allow all origins
    ```
 
-5. Start the FastAPI development server:
+5. Run database migrations:
+   ```bash
+   alembic upgrade head
+   ```
+
+6. Create an initial Admin account:
+   ```bash
+   python seed_admin.py
+   ```
+   Follow the prompts for email, password, and role.
+
+7. Start the FastAPI development server:
    ```bash
    python -m uvicorn app.main:app --reload
    ```
 
-6. **Interactive API Documentation:**
+8. **Interactive API Documentation:**
    - **Swagger UI:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
    - **Health Check:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
 
@@ -194,6 +220,7 @@ python report_littering.py --source sample.mp4
 - **Background Model Warm-up:** `BG_HISTORY` and `WARMUP_FRAMES` parameters must be adjusted according to input clip duration.
 - **Derived Confidence Metric:** Confidence scores reflect track lifetime heuristics rather than calibrated probabilistic outputs.
 - **Static Geolocation:** Incident locations default to preset baseline coordinates until per-camera GPS metadata integration is configured.
+- **bbox/frame dimensions:** `report_littering.py` does not yet send `frame_width`/`frame_height` with detections, so the API's computed `bbox` field will return `null` until this is wired up.
 
 ---
 
