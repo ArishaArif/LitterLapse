@@ -30,6 +30,9 @@ def list_incidents(
     if review_status:
         query = query.filter(models.Incident.review_status == review_status)
     return query.order_by(models.Incident.timestamp.desc()).offset(skip).limit(limit).all()
+    if plate_number:
+        query = query.filter(models.Incident.plate_number == plate_number)
+    return query.order_by(models.Incident.timestamp.desc()).offset(skip).limit(limit).all()
 
 # GET ONE
 @router.get("/{incident_id}", response_model=schemas.IncidentOut)
@@ -51,9 +54,13 @@ def update_incident(incident_id: int, update: schemas.IncidentUpdate, db: Sessio
     db.refresh(incident)
     return incident
 
-# DELETE (useful for cleaning up test data)
+# DELETE (Admin only — was open to anyone; frontend report flagged this)
 @router.delete("/{incident_id}", status_code=204)
-def delete_incident(incident_id: int, db: Session = Depends(get_db)):
+def delete_incident(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    _: dict = Depends(auth.require_role("Admin")),
+):
     incident = db.query(models.Incident).filter(models.Incident.id == incident_id).first()
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
