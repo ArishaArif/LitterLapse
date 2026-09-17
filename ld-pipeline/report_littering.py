@@ -144,6 +144,10 @@ def process(source_video, boxes_csv, candidates_csv, violation_type="littering")
             "location_lat": DEFAULT_LOCATION[0],
             "location_lng": DEFAULT_LOCATION[1],
             "evidence_path": evidence_filename,
+            "bbox_x1": x1,
+            "bbox_y1": y1,
+            "bbox_x2": x2,
+            "bbox_y2": y2,
         }
 
         try:
