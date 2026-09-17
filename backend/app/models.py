@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Boolean
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -24,3 +24,20 @@ class Incident(Base):
     bbox_y1 = Column(Float, nullable=True)
     bbox_x2 = Column(Float, nullable=True)
     bbox_y2 = Column(Float, nullable=True)
+
+    # Dimensions of the evidence frame the bbox was measured against.
+    # Needed to normalize bbox_x1..y2 into the 0.0-1.0 fractional
+    # {x, y, w, h} shape the frontend's BoundingBox overlay expects.
+    # Nullable for the same reason as the bbox fields above.
+    frame_width = Column(Float, nullable=True)
+    frame_height = Column(Float, nullable=True)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    role = Column(String, nullable=False, default="Reviewer")  # "Admin" | "Reviewer"
+    is_active = Column(Boolean, default=True)

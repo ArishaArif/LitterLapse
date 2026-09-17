@@ -11,9 +11,15 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Environmental Violation Detection API")
 
+# CORS_ALLOWED_ORIGINS: comma-separated list, e.g.
+# "https://litterlapse.app,https://staging.litterlapse.app"
+# Falls back to "*" only when unset, so local/dev keeps working as before.
+_origins_env = os.getenv("CORS_ALLOWED_ORIGINS")
+allow_origins = [o.strip() for o in _origins_env.split(",")] if _origins_env else ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,6 +27,7 @@ app.add_middleware(
 
 app.mount("/evidence", StaticFiles(directory="evidence"), name="evidence")
 
+app.include_router(auth.router)
 app.include_router(incidents.router)
 app.include_router(analytics.router)
 
