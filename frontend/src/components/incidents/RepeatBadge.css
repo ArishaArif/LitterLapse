@@ -1,0 +1,15 @@
+.repeat-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--accent-orange);
+  border-radius: var(--radius-sm);
+  background: var(--tint-orange);
+  color: var(--accent-orange);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}

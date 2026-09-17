@@ -1,5 +1,6 @@
 .status-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
 }
 
@@ -61,4 +62,96 @@
   border-radius: var(--radius-md);
   font-size: var(--fs-md);
   letter-spacing: var(--ls-wide);
+}
+
+.status-buttons__btn.is-rejecting {
+  box-shadow: inset 0 0 0 2px var(--text-primary);
+}
+
+.status-buttons__reason {
+  flex: 1 0 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-base);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.status-buttons__reason-label {
+  font-family: var(--font-display);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--status-red);
+}
+
+.status-buttons__reason-select,
+.status-buttons__reason-input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  color-scheme: dark;
+}
+
+.status-buttons__reason-select:focus,
+.status-buttons__reason-input:focus {
+  outline: none;
+  border-color: var(--status-red);
+}
+
+.status-buttons__reason-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.status-buttons__reason-confirm {
+  flex: 1 1 auto;
+  padding: var(--space-2) var(--space-3);
+  background: var(--action-reject);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  transition: filter 120ms ease, opacity 120ms ease;
+}
+
+.status-buttons__reason-confirm:hover {
+  filter: brightness(1.12);
+}
+
+.status-buttons__reason-confirm:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.status-buttons__reason-cancel {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.status-buttons__reason-cancel:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
 }

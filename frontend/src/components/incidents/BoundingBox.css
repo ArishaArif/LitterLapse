@@ -1,0 +1,8 @@
+.bounding-box {
+  position: absolute;
+  border: 2px solid var(--accent-cyan);
+  background: var(--tint-cyan);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--glow-cyan);
+  pointer-events: none;
+}

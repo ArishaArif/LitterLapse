@@ -52,6 +52,14 @@
   gap: var(--space-2);
 }
 
+.incident-card__head-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 .incident-card__status {
   display: inline-flex;
   align-items: center;
@@ -82,6 +90,7 @@
 }
 
 .incident-card__thumb {
+  position: relative;
   flex: 0 0 auto;
   width: 100px;
   aspect-ratio: 16 / 10;
@@ -112,6 +121,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.incident-card__plate-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.incident-card__plate-row .incident-card__plate {
+  min-width: 0;
 }
 
 .incident-card__meta {

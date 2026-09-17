@@ -1,19 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import IncidentCard from '../components/incidents/IncidentCard'
 import ViolationMap from '../components/map/ViolationMap'
+import { apiFetch, API_BASE } from '../lib/api'
+import { buildIncidentContext, incidentContextFor, severityFor } from '../lib/incidents'
 import './FullConsole.css'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 function FullConsole() {
   const [incidents, setIncidents] = useState([])
+  const incidentContext = useMemo(() => buildIncidentContext(incidents), [incidents])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadIncidents() {
       try {
-        const res = await fetch(`${API_BASE}/incidents/`)
+        const res = await apiFetch(`${API_BASE}/incidents/`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
         const list = Array.isArray(data) ? data : []
@@ -33,20 +34,25 @@ function FullConsole() {
     }
   }, [])
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, newStatus, reason) => {
     const previousIncident = incidents.find((incident) => incident.id === id)
     const previousStatus = previousIncident?.review_status
+    const previousReason = previousIncident?.reject_reason ?? null
 
     setIncidents((current) =>
       current.map((incident) =>
         incident.id === id
-          ? { ...incident, review_status: newStatus }
+          ? {
+              ...incident,
+              review_status: newStatus,
+              reject_reason: newStatus === 'rejected' ? (reason ?? null) : null,
+            }
           : incident,
       ),
     )
 
     try {
-      const res = await fetch(`${API_BASE}/incidents/${id}`, {
+      const res = await apiFetch(`${API_BASE}/incidents/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ review_status: newStatus }),
@@ -57,7 +63,11 @@ function FullConsole() {
       setIncidents((current) =>
         current.map((incident) =>
           incident.id === id
-            ? { ...incident, review_status: previousStatus }
+            ? {
+                ...incident,
+                review_status: previousStatus,
+                reject_reason: previousReason,
+              }
             : incident,
         ),
       )
@@ -71,13 +81,18 @@ function FullConsole() {
           <h2 className="full-console__section-title">Live Incident Feed</h2>
         </div>
         <div className="full-console__feed-list">
-          {incidents.map((incident) => (
-            <IncidentCard
-              key={incident.id}
-              incident={incident}
-              onStatusChange={handleStatusChange}
-            />
-          ))}
+          {incidents.map((incident) => {
+            const contextEntry = incidentContextFor(incidentContext, incident)
+            return (
+              <IncidentCard
+                key={incident.id}
+                incident={incident}
+                severity={severityFor(incident, contextEntry)}
+                plateOccurrence={contextEntry.occurrence}
+                onStatusChange={handleStatusChange}
+              />
+            )
+          })}
         </div>
       </section>
 

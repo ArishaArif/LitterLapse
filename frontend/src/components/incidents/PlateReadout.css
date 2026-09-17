@@ -40,6 +40,18 @@
   opacity: 0.7;
 }
 
+.plate-readout__plate-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.plate-readout__plate-row .plate-readout__plate {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .plate-readout__confidence {
   display: flex;
   flex-direction: column;

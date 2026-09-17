@@ -2,7 +2,7 @@ import { MapContainer, ImageOverlay, Marker, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import MapLegend from './MapLegend'
-import { VIOLATION_LABELS } from '../../lib/incidents'
+import { VIOLATION_LABELS, buildIncidentContext, incidentContextFor, severityFor } from '../../lib/incidents'
 import './ViolationMap.css'
 
 // Updated to center on your Liberty Market export
@@ -92,6 +92,16 @@ function ViolationMap({ incidents = [] }) {
       incident.review_status === 'needs_investigation',
   ).length
 
+  const incidentContext = buildIncidentContext(incidents)
+
+  const severityCounts = { low: 0, medium: 0, high: 0 }
+  for (const incident of incidents) {
+    const severity = severityFor(incident, incidentContextFor(incidentContext, incident))
+    if (Object.prototype.hasOwnProperty.call(severityCounts, severity)) {
+      severityCounts[severity] += 1
+    }
+  }
+
   return (
     <div className="violation-map">
       <div className="violation-map__canvas">
@@ -136,6 +146,29 @@ function ViolationMap({ incidents = [] }) {
         <StatTile tone="litter" label="Litter Detected" value={litterDetected} />
         <StatTile tone="cameras" label="Cameras Active" value={CAMERAS_ACTIVE} />
         <StatTile tone="alerts" label="Unresolved Alerts" value={unresolvedAlerts} />
+        <div className="stat-tile stat-tile--severity">
+          <div className="stat-tile__head">
+            <span
+              className="stat-tile__mark stat-tile__mark--severity"
+              aria-hidden="true"
+            />
+            <span className="stat-tile__label">Severity Breakdown</span>
+          </div>
+          <div className="severity-tally">
+            <span className="severity-tally__item" data-severity="high">
+              <span className="severity-tally__count">{severityCounts.high}</span>
+              <span className="severity-tally__label">High</span>
+            </span>
+            <span className="severity-tally__item" data-severity="medium">
+              <span className="severity-tally__count">{severityCounts.medium}</span>
+              <span className="severity-tally__label">Med</span>
+            </span>
+            <span className="severity-tally__item" data-severity="low">
+              <span className="severity-tally__count">{severityCounts.low}</span>
+              <span className="severity-tally__label">Low</span>
+            </span>
+          </div>
+        </div>
         <div className="stat-tile stat-tile--chart">
           <div className="stat-tile__head">
             <span className="stat-tile__label">Hourly Rate</span>

@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import ViolationTag from './ViolationTag'
+import SeverityBadge from './SeverityBadge'
+import RepeatBadge from './RepeatBadge'
+import BoundingBox from './BoundingBox'
 import StatusButtonGroup from './StatusButtonGroup'
 import { STATUS_LABELS, formatTimeAgo, formatConfidence, evidenceSrc } from '../../lib/incidents'
 import './IncidentCard.css'
 
-function IncidentCard({ incident, onStatusChange }) {
+function IncidentCard({ incident, severity, plateOccurrence, onStatusChange }) {
   const {
     id,
     plate_number,
@@ -32,7 +35,10 @@ function IncidentCard({ incident, onStatusChange }) {
           "view details" part of the card is a link. */}
       <Link to={`/incident/${id}`} className="incident-card__link">
         <header className="incident-card__head">
-          <ViolationTag violationType={violation_type} />
+          <div className="incident-card__head-tags">
+            <ViolationTag violationType={violation_type} />
+            <SeverityBadge severity={severity} />
+          </div>
           <div className="incident-card__head-right">
             <span className="incident-card__status">{statusLabel}</span>
             <span className="incident-card__id">{incidentId}</span>
@@ -42,17 +48,23 @@ function IncidentCard({ incident, onStatusChange }) {
         <div className="incident-card__body">
           <div className="incident-card__thumb">
             {showThumb ? (
-              <img
-                className="incident-card__thumb-img"
-                src={thumbSrc}
-                alt={`Evidence for ${plateLabel}`}
-                onError={() => setThumbFailed(true)}
-              />
+              <>
+                <img
+                  className="incident-card__thumb-img"
+                  src={thumbSrc}
+                  alt={`Evidence for ${plateLabel}`}
+                  onError={() => setThumbFailed(true)}
+                />
+                <BoundingBox bbox={incident.bbox} />
+              </>
             ) : null}
           </div>
 
           <div className="incident-card__info">
-            <div className="incident-card__plate">{plateLabel}</div>
+            <div className="incident-card__plate-row">
+              <div className="incident-card__plate">{plateLabel}</div>
+              <RepeatBadge occurrence={plateOccurrence} />
+            </div>
             <div className="incident-card__meta">
               <span className="incident-card__meta-time">TIME {timeAgo}</span>
               <span className="incident-card__meta-sep" aria-hidden="true">
@@ -66,7 +78,7 @@ function IncidentCard({ incident, onStatusChange }) {
 
       <StatusButtonGroup
         status={review_status}
-        onChange={(newStatus) => onStatusChange?.(id, newStatus)}
+        onChange={(newStatus, reason) => onStatusChange?.(id, newStatus, reason)}
       />
     </article>
   )

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getSession, getUserEmail, getRole, logout } from '../../lib/auth'
 import './TopBar.css'
 
 const TABS = [
@@ -54,11 +55,22 @@ function Clock() {
 
 function TopBar({ activeDispatches = 0, consoleId = 'LAHORE_CONSOLE_03' }) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const session = getSession()
+  const email = getUserEmail()
+  const role = getRole()
+  const roleLabel = role ? role.charAt(0).toUpperCase() + role.slice(1) : null
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <header className="topbar">
       <div className="topbar__left">
-        <span className="topbar__wordmark">Clean City</span>
+        <img className="topbar__logo" src="/logo.png" alt="" aria-hidden="true" />
+        <span className="topbar__wordmark">LITTER LAPSE</span>
         <span className="topbar__badge">
           <span className="topbar__badge-dot" aria-hidden="true" />
           {activeDispatches} Active Dispatches
@@ -82,6 +94,17 @@ function TopBar({ activeDispatches = 0, consoleId = 'LAHORE_CONSOLE_03' }) {
       </nav>
 
       <div className="topbar__right">
+        {session ? (
+          <span className="topbar__user" title={email ?? undefined}>
+            <span className="topbar__user-role">{roleLabel ?? 'Operator'}</span>
+            <span className="topbar__user-email">{email ?? 'Signed In'}</span>
+          </span>
+        ) : null}
+        {session ? (
+          <button type="button" className="topbar__logout" onClick={handleLogout}>
+            Log Out
+          </button>
+        ) : null}
         <Clock />
         <span className="topbar__console-id">{consoleId}</span>
       </div>

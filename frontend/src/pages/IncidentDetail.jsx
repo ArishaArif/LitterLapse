@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import ViolationTag from '../components/incidents/ViolationTag'
+import SeverityBadge from '../components/incidents/SeverityBadge'
+import BoundingBox from '../components/incidents/BoundingBox'
 import StatusButtonGroup from '../components/incidents/StatusButtonGroup'
 import PlateReadout from '../components/incidents/PlateReadout'
-import { formatTimeAgo, evidenceSrc } from '../lib/incidents'
+import { formatTimeAgo, evidenceSrc, buildIncidentContext, incidentContextFor, severityFor } from '../lib/incidents'
+import { apiFetch, API_BASE } from '../lib/api'
 import './IncidentDetail.css'
-
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 function toNumericId(idParam) {
   const numeric = String(idParam ?? '').replace(/\D/g, '')
@@ -50,36 +51,32 @@ function IncidentDetail() {
   const { id } = useParams()
   const numericId = toNumericId(id)
 
-  const [incident, setIncident] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loadedForId, setLoadedForId] = useState(null)
+  const [loadedIncident, setLoadedIncident] = useState(null)
+  const [plateHistory, setPlateHistory] = useState(null)
+  const incident = loadedForId === numericId ? loadedIncident : null
+  const loading = numericId !== null && loadedForId !== numericId
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
 
     async function loadIncident() {
-      if (!numericId) {
-        if (!cancelled) {
-          setIncident(null)
-          setLoading(false)
-        }
-        return
-      }
+      if (!numericId) return
 
       try {
-        const res = await fetch(`${API_BASE}/incidents/${numericId}`)
+        const res = await apiFetch(`${API_BASE}/incidents/${numericId}`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
         if (!cancelled) {
-          setIncident(data)
+          setLoadedForId(numericId)
+          setLoadedIncident(data)
         }
       } catch (err) {
         console.error(`Could not load incident ${numericId} from backend.`, err)
         if (!cancelled) {
-          setIncident(null)
+          setLoadedForId(numericId)
+          setLoadedIncident(null)
         }
-      } finally {
-        if (!cancelled) setLoading(false)
       }
     }
 
@@ -88,6 +85,31 @@ function IncidentDetail() {
       cancelled = true
     }
   }, [numericId])
+
+  useEffect(() => {
+    let cancelled = false
+    const plate = incident?.plate_number
+    if (!plate) return undefined
+    async function loadPlateHistory() {
+      try {
+        const res = await apiFetch(`${API_BASE}/incidents/?limit=200`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        if (!cancelled) {
+          setPlateHistory({
+            plate,
+            context: buildIncidentContext(Array.isArray(data) ? data : []),
+          })
+        }
+      } catch (err) {
+        console.error('Could not load incident history for repeat tracking.', err)
+      }
+    }
+    loadPlateHistory()
+    return () => {
+      cancelled = true
+    }
+  }, [incident?.plate_number])
 
   if (loading) {
     return (
@@ -123,14 +145,23 @@ function IncidentDetail() {
   const incidentId = `INC-${incident.id}`
   const timeAgo = formatTimeAgo(incident.timestamp)
   const status = incident.review_status
+  const contextEntry =
+    plateHistory?.plate === incident.plate_number
+      ? incidentContextFor(plateHistory.context, incident)
+      : { occurrence: null, locationRepeatCount: null }
 
-  const setStatus = async (newStatus) => {
+  const setStatus = async (newStatus, reason) => {
     const previousStatus = incident.review_status
+    const previousReason = incident.reject_reason ?? null
 
-    setIncident((current) => ({ ...current, review_status: newStatus }))
+    setLoadedIncident((current) => ({
+      ...current,
+      review_status: newStatus,
+      reject_reason: newStatus === 'rejected' ? (reason ?? null) : null,
+    }))
 
     try {
-      const res = await fetch(`${API_BASE}/incidents/${incident.id}`, {
+      const res = await apiFetch(`${API_BASE}/incidents/${incident.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ review_status: newStatus }),
@@ -138,7 +169,11 @@ function IncidentDetail() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
     } catch (err) {
       console.error(`Could not save status change for incident ${incident.id}; reverting.`, err)
-      setIncident((current) => ({ ...current, review_status: previousStatus }))
+      setLoadedIncident((current) => ({
+        ...current,
+        review_status: previousStatus,
+        reject_reason: previousReason,
+      }))
     }
   }
 
@@ -156,6 +191,7 @@ function IncidentDetail() {
           </div>
           <div className="incident-detail__head-meta">
             <ViolationTag violationType={incident.violation_type} />
+            <SeverityBadge severity={severityFor(incident, contextEntry)} />
             <span className="incident-detail__time">Detected {timeAgo}</span>
           </div>
         </header>
@@ -165,12 +201,14 @@ function IncidentDetail() {
             src={evidenceSrc(incident)}
             alt={`Evidence for ${incident.plate_number ?? 'unidentified plate'}`}
           />
+          <BoundingBox bbox={incident.bbox} />
         </figure>
 
         <div className="incident-detail__grid">
           <PlateReadout
             plate={incident.plate_number}
             confidence={incident.plate_confidence}
+            occurrence={contextEntry.occurrence}
           />
 
           <div className="location-block">

@@ -1,4 +1,5 @@
 import { formatConfidence } from '../../lib/incidents'
+import RepeatBadge from './RepeatBadge'
 import './PlateReadout.css'
 
 function levelFor(pct) {
@@ -8,7 +9,7 @@ function levelFor(pct) {
   return 'low'
 }
 
-function PlateReadout({ plate, confidence }) {
+function PlateReadout({ plate, confidence, occurrence }) {
   const hasPlate = Boolean(plate)
   const pct =
     confidence == null || Number.isNaN(confidence)
@@ -19,10 +20,13 @@ function PlateReadout({ plate, confidence }) {
   return (
     <div className="plate-readout">
       <span className="plate-readout__label">Detected Plate</span>
-      <div
-        className={`plate-readout__plate${hasPlate ? '' : ' plate-readout__plate--empty'}`}
-      >
-        {hasPlate ? plate : 'NO PLATE'}
+      <div className="plate-readout__plate-row">
+        <div
+          className={`plate-readout__plate${hasPlate ? '' : ' plate-readout__plate--empty'}`}
+        >
+          {hasPlate ? plate : 'NO PLATE'}
+        </div>
+        <RepeatBadge occurrence={occurrence} />
       </div>
 
       <div className="plate-readout__confidence">
