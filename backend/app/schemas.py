@@ -14,6 +14,11 @@ class IncidentBase(BaseModel):
     location_lat: Optional[float] = None
     location_lng: Optional[float] = None
     evidence_path: Optional[str] = None
+    bbox_x1: Optional[float] = None
+    bbox_y1: Optional[float] = None
+    bbox_x2: Optional[float] = None
+    bbox_y2: Optional[float] = None
+
 
 
 class IncidentCreate(IncidentBase):
@@ -37,6 +42,10 @@ class IncidentOut(BaseModel):
     evidence_path: Optional[str] = None
     review_status: str
     notes: Optional[str] = None
+    bbox_x1: Optional[float] = None
+    bbox_y1: Optional[float] = None
+    bbox_x2: Optional[float] = None
+    bbox_y2: Optional[float] = None
 
     class Config:
         from_attributes = True

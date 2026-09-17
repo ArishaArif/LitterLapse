@@ -16,3 +16,11 @@ class Incident(Base):
     evidence_path = Column(String, nullable=True)         # path/URL to the saved frame image
     review_status = Column(String, default="pending")     # pending | accepted | rejected | needs_investigation
     notes = Column(Text, nullable=True)
+
+     # Pixel-space bounding box of the vehicle on the full evidence frame,
+    # as sent by report_littering.py. Nullable since older/manual incidents
+    # (seed data, /docs testing) won't have this.
+    bbox_x1 = Column(Float, nullable=True)
+    bbox_y1 = Column(Float, nullable=True)
+    bbox_x2 = Column(Float, nullable=True)
+    bbox_y2 = Column(Float, nullable=True)
