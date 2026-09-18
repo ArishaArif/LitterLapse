@@ -15,7 +15,7 @@ An AI-powered end-to-end platform designed to detect environmental violations (s
           ▼  (POST /incidents/)
  [ FastAPI Backend ] ────── (SQLAlchemy ORM) ────── [ PostgreSQL DB ]
           │
-          ▼  (GET /incidents/)
+          ▼  (GET /incidents/ — Bearer JWT)
 [ Frontend Dashboard ]
 ```
 
@@ -38,17 +38,22 @@ An AI-powered end-to-end platform designed to detect environmental violations (s
 │   ├── seed_admin.py         # One-off script to create Admin/Reviewer accounts
 │   ├── .env                 # Local environment variables (ignored by Git)
 │   └── requirements.txt     # Python dependencies
-├── frontend/                 # React Dashboard (Vite)
+├── frontend/                 # React Dashboard (Vite) — "LITTER LAPSE"
+│   ├── public/
+│   │   └── logo.png         # Project emblem — favicon, top-bar & login brand mark
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── layout/      # TopBar, AppLayout
-│   │   │   ├── incidents/   # IncidentCard, StatusButtonGroup, ViolationTag, PlateReadout
+│   │   │   ├── auth/        # LoginScreen, ProtectedRoute — JWT-gated routes
+│   │   │   ├── layout/      # TopBar (wordmark, user chip, logout), AppLayout
+│   │   │   ├── incidents/   # IncidentCard, StatusButtonGroup, ViolationTag, PlateReadout,
+│   │   │   │                #   SeverityBadge, RepeatBadge, BoundingBox
 │   │   │   └── map/         # ViolationMap, MapLegend
 │   │   ├── pages/           # FullConsole, IncidentDetail, ExpandedMap
-│   │   ├── lib/             # incidents.js — shared formatting/labels
+│   │   ├── lib/             # incidents.js — severity/repeat/bbox helpers & input sanitizers
+│   │   │                    # auth.js — JWT session (sessionStorage), api.js — Bearer interceptor
 │   │   ├── mock/            # incidents.mock.json — local mock data
 │   │   ├── theme/           # tokens.css — design tokens
-│   │   ├── App.jsx          # Route definitions
+│   │   ├── App.jsx          # Route definitions (login + protected console)
 │   │   └── main.jsx         # App entry point
 │   ├── package.json
 │   └── vite.config.js
@@ -157,12 +162,28 @@ An AI-powered end-to-end platform designed to detect environmental violations (s
    npm install
    ```
 
-3. Start the Vite development server:
+3. **Configure the API URL:** create a `frontend/.env` file pointing at the backend:
+   ```env
+   VITE_API_URL=http://127.0.0.1:8000
+   ```
+   > **Note:** the frontend reads `VITE_API_URL` and falls back to `http://localhost:8000` when it is unset. The value must be a plain URL — markdown-style wrapping like `[http://...]` is not valid.
+
+4. Start the Vite development server:
    ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:5173](http://localhost:5173) in your web browser.
+5. Open [http://localhost:5173](http://localhost:5173) — you'll be redirected to the **LITTER LAPSE** login screen. Sign in with an account provisioned via `python seed_admin.py` (Backend Setup, step 6). The JWT is stored in `sessionStorage`, attached automatically to every API call, and expired/invalid sessions redirect back to login.
+
+#### Dashboard Features
+
+- **JWT auth & role-based access** — every route except `/login` sits behind `ProtectedRoute`; the decoded JWT role (`Admin`/`Reviewer`) and account email are shown in the top bar, with a logout button.
+- **Severity tagging** — each incident carries a Low/Medium/High badge derived from AI confidence and repeat occurrences of the same plate at the same location (card + detail view).
+- **Severity breakdown tile** — the map stats bar tallies High/Med/Low counts alongside the existing incident-count tiles.
+- **Repeat-offender tracking** — plates seen across multiple incidents get an "Nth Violation" badge next to the plate readout.
+- **Bounding-box overlay** — when the API returns the computed normalized `bbox` field, a cyan overlay is drawn over the evidence frame (card thumbnail + detail view); it stays hidden for incidents without box data.
+- **Reject-reason flow** — rejecting an incident prompts for a reason (preset list or a short note); reasons are sanitized and length-limited, then persisted through the incident `notes` field. Accept remains single-click.
+- **Security hardening** — all free-text inputs are sanitized and length-capped, no `dangerouslySetInnerHTML` anywhere, and no secrets or keys ship in the frontend bundle.
 
 ---
 
