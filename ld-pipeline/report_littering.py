@@ -148,6 +148,8 @@ def process(source_video, boxes_csv, candidates_csv, violation_type="littering")
             "bbox_y1": y1,
             "bbox_x2": x2,
             "bbox_y2": y2,
+            "frame_width": frame.shape[1],
+            "frame_height": frame.shape[0],
         }
 
         try:
